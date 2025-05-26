@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quizz App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .setup-section {
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        input[type="text"], input[type="url"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus, input[type="url"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .mode-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .mode-card {
+            border: 3px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .mode-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .mode-card.selected {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .mode-card h3 {
+            margin-bottom: 10px;
+            font-size: 1.3rem;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .question-section {
+            display: none;
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .question-counter {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .timer {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #e74c3c;
+        }
+
+        .question-text {
+            font-size: 1.3rem;
+            margin-bottom: 25px;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .answers-grid {
+            display: grid;
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .answer-option {
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+        }
+
+        .answer-option:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .answer-option.selected {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .answer-option.correct {
+            border-color: #27ae60;
+            background: #d5f4e6;
+            color: #27ae60;
+        }
+
+        .answer-option.incorrect {
+            border-color: #e74c3c;
+            background: #ffeaea;
+            color: #e74c3c;
+        }
+
+        .answer-letter {
+            background: #667eea;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s;
+        }
+
+        .results-section {
+            display: none;
+            text-align: center;
+        }
+
+        .score-display {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #667eea;
+            margin: 20px 0;
+        }
+
+        .score-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .score-item {
+            background: #f8f9ff;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .score-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .score-label {
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .success {
+            color: #27ae60;
+        }
+
+        .failure {
+            color: #e74c3c;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+        }
+
+        .error {
+            color: #e74c3c;
+            background: #ffeaea;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .data-source-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .source-option {
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .source-option:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+
+        .source-option.selected {
+            border-color: #667eea;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        }
+
+        .source-icon {
+            font-size: 1.5rem;
+            opacity: 0.8;
+        }
+
+        .source-info h4 {
+            margin: 0 0 4px 0;
+            color: #333;
+            font-size: 0.95rem;
+        }
+
+        .source-info small {
+            color: #666;
+            font-size: 0.8rem;
+            line-height: 1.3;
+        }
+
+        .url-help {
+            margin-top: 12px;
+            padding: 15px;
+            background: #f8f9ff;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .help-section {
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .help-section strong {
+            color: #667eea;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .help-section ol {
+            padding-left: 20px;
+            margin: 8px 0;
+        }
+
+        .help-section li {
+            margin: 4px 0;
+        }
+
+        .help-section small {
+            color: #888;
+            font-style: italic;
+            display: block;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #e0e0e0;
+        }
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .question-count-selector {
+            display: flex;
+            align-items: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 8px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .count-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .count-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .count-btn:active {
+            transform: scale(0.95);
+        }
+
+        .count-display {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0 20px;
+            color: white;
+            min-width: 80px;
+        }
+
+        .count-number {
+            font-size: 2rem;
+            font-weight: bold;
+            line-height: 1;
+        }
+
+        .count-label {
+            font-size: 0.8rem;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .quick-select-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .quick-btn {
+            background: rgba(102, 126, 234, 0.1);
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            color: #667eea;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .quick-btn:hover {
+            background: rgba(102, 126, 234, 0.2);
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .quick-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+            .mode-selector {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 10px;
+            }
+            
+            .card {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Quizz App</h1>
+            <p>Créez vos quizz à partir de Google Sheets</p>
+        </div>
+
+        <!-- Section de configuration -->
+        <div class="card setup-section" id="setupSection">
+            <h2>Configuration du Quizz</h2>
+            
+            <div class="form-group">
+                <label for="dataSource">Source des données</label>
+                <div class="data-source-selector">
+                    <div class="source-option selected" data-source="csv">
+                        <div class="source-icon">📊</div>
+                        <div class="source-info">
+                            <h4>CSV Export</h4>
+                            <small>URL d'export CSV depuis Google Sheets</small>
+                        </div>
+                    </div>
+                    <div class="source-option" data-source="sheets">
+                        <div class="source-icon">📈</div>
+                        <div class="source-info">
+                            <h4>Google Sheets Direct</h4>
+                            <small>URL de partage Google Sheets</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="sheetUrl" id="urlLabel">URL de la source de données</label>
+                <input type="url" id="sheetUrl" placeholder="Collez votre URL ici...">
+                <div class="url-help" id="urlHelp">
+                    <div class="help-section" id="csvHelp">
+                        <strong>📊 Pour CSV :</strong>
+                        <ol>
+                            <li>Google Sheets → <strong>Fichier > Partager > Publier sur le Web</strong></li>
+                            <li>Choisir <strong>Format CSV</strong></li>
+                            <li>Cocher <strong>"Republier automatiquement"</strong></li>
+                            <li>Copier l'URL générée</li>
+                        </ol>
+                        <small>Format attendu : https://docs.google.com/.../export?format=csv</small>
+                    </div>
+                    <div class="help-section" id="sheetsHelp" style="display: none;">
+                        <strong>📈 Pour Google Sheets Direct :</strong>
+                        <ol>
+                            <li>Ouvrir votre Google Sheet</li>
+                            <li>Cliquer sur <strong>"Partager"</strong></li>
+                            <li>Changer l'accès à <strong>"Tous les utilisateurs ayant le lien"</strong></li>
+                            <li>Copier l'URL de partage</li>
+                        </ol>
+                        <small>Format attendu : https://docs.google.com/spreadsheets/d/.../edit</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Mode de Quizz</label>
+                <div class="mode-selector">
+                    <div class="mode-card" data-mode="quick">
+                        <h3>⚡ Quizz Rapide</h3>
+                        <p>Questions aléatoires</p>
+                        <p>Pas de limite de temps</p>
+                    </div>
+                    <div class="mode-card" data-mode="exam">
+                        <h3>📝 Examen Blanc</h3>
+                        <p>80 questions</p>
+                        <p>Score minimum: 64%</p>
+                        <p>Chronométré</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group" id="quickModeOptions" style="display: none;">
+                <label for="questionCount">Nombre de questions</label>
+                <div class="question-count-container">
+                    <div class="question-count-selector">
+                        <button type="button" class="count-btn decrease" id="decreaseBtn">-</button>
+                        <div class="count-display">
+                            <span class="count-number" id="countNumber">10</span>
+                            <span class="count-label">questions</span>
+                        </div>
+                        <button type="button" class="count-btn increase" id="increaseBtn">+</button>
+                    </div>
+                    <div class="quick-select-buttons">
+                        <button type="button" class="quick-btn" data-count="5">5</button>
+                        <button type="button" class="quick-btn" data-count="10">10</button>
+                        <button type="button" class="quick-btn active" data-count="20">20</button>
+                        <button type="button" class="quick-btn" data-count="50">50</button>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn" id="loadQuizBtn">Charger le Quizz</button>
+        </div>
+
+        <!-- Section de chargement -->
+        <div class="card loading" id="loadingSection" style="display: none;">
+            <h3>Chargement des questions...</h3>
+            <p>Veuillez patienter</p>
+        </div>
+
+        <!-- Section des questions -->
+        <div class="card question-section" id="questionSection">
+            <div class="question-header">
+                <div class="question-counter" id="questionCounter">Question 1 / 10</div>
+                <div class="timer" id="timer" style="display: none;">00:00</div>
+            </div>
+
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+
+            <div class="question-text" id="questionText">Question sera affichée ici</div>
+
+            <div class="answers-grid" id="answersGrid">
+                <!-- Les réponses seront générées dynamiquement -->
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <button class="btn" id="prevBtn" style="display: none;">Précédent</button>
+                <button class="btn" id="nextBtn">Suivant</button>
+                <button class="btn" id="finishBtn" style="display: none;">Terminer</button>
+            </div>
+        </div>
+
+        <!-- Section des résultats -->
+        <div class="card results-section" id="resultsSection">
+            <h2>Résultats du Quizz</h2>
+            
+            <div class="score-display" id="scoreDisplay">0%</div>
+            
+            <div class="score-details">
+                <div class="score-item">
+                    <div class="score-value" id="correctAnswers">0</div>
+                    <div class="score-label">Bonnes réponses</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-value" id="totalQuestions">0</div>
+                    <div class="score-label">Total questions</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-value" id="timeSpent">00:00</div>
+                    <div class="score-label">Temps passé</div>
+                </div>
+            </div>
+
+            <div id="examResult" style="margin: 20px 0; font-size: 1.2rem; font-weight: bold;"></div>
+
+            <button class="btn" id="restartBtn">Recommencer</button>
+        </div>
+    </div>
+
+    <script>
+        class QuizApp {
+            constructor() {
+                this.questions = [];
+                this.currentQuestionIndex = 0;
+                this.userAnswers = [];
+                this.selectedMode = null;
+                this.selectedDataSource = 'csv';
+                this.startTime = null;
+                this.timerInterval = null;
+                this.questionCount = 20;
+
+                this.initEventListeners();
+            }
+
+            initEventListeners() {
+                // Sélection de la source de données
+                document.querySelectorAll('.source-option').forEach(option => {
+                    option.addEventListener('click', () => {
+                        document.querySelectorAll('.source-option').forEach(o => o.classList.remove('selected'));
+                        option.classList.add('selected');
+                        this.selectedDataSource = option.dataset.source;
+                        this.updateUrlHelp();
+                    });
+                });
+
+                // Sélection du mode
+                document.querySelectorAll('.mode-card').forEach(card => {
+                    card.addEventListener('click', () => {
+                        document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('selected'));
+                        card.classList.add('selected');
+                        this.selectedMode = card.dataset.mode;
+                        
+                        const quickOptions = document.getElementById('quickModeOptions');
+                        quickOptions.style.display = this.selectedMode === 'quick' ? 'block' : 'none';
+                    });
+                });
+
+                // Chargement du quizz
+                document.getElementById('loadQuizBtn').addEventListener('click', () => {
+                    this.loadQuiz();
+                });
+
+                // Navigation
+                document.getElementById('nextBtn').addEventListener('click', () => {
+                    this.nextQuestion();
+                });
+
+                document.getElementById('prevBtn').addEventListener('click', () => {
+                    this.prevQuestion();
+                });
+
+                document.getElementById('finishBtn').addEventListener('click', () => {
+                    this.finishQuiz();
+                });
+
+                document.getElementById('restartBtn').addEventListener('click', () => {
+                    this.restart();
+                });
+
+                // Contrôles pour le nombre de questions
+                this.initQuestionCountControls();
+            }
+
+            updateUrlHelp() {
+                const csvHelp = document.getElementById('csvHelp');
+                const sheetsHelp = document.getElementById('sheetsHelp');
+                const urlInput = document.getElementById('sheetUrl');
+                
+                if (this.selectedDataSource === 'csv') {
+                    csvHelp.style.display = 'block';
+                    sheetsHelp.style.display = 'none';
+                    urlInput.placeholder = 'https://docs.google.com/.../export?format=csv';
+                } else {
+                    csvHelp.style.display = 'none';
+                    sheetsHelp.style.display = 'block';
+                    urlInput.placeholder = 'https://docs.google.com/spreadsheets/d/.../edit';
+                }
+            }
+
+            initQuestionCountControls() {
+                const decreaseBtn = document.getElementById('decreaseBtn');
+                const increaseBtn = document.getElementById('increaseBtn');
+                const countNumber = document.getElementById('countNumber');
+                const quickBtns = document.querySelectorAll('.quick-btn');
+
+                decreaseBtn.addEventListener('click', () => {
+                    if (this.questionCount > 1) {
+                        this.questionCount--;
+                        this.updateQuestionCountDisplay();
+                    }
+                });
+
+                increaseBtn.addEventListener('click', () => {
+                    if (this.questionCount < 100) {
+                        this.questionCount++;
+                        this.updateQuestionCountDisplay();
+                    }
+                });
+
+                quickBtns.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        this.questionCount = parseInt(btn.dataset.count);
+                        this.updateQuestionCountDisplay();
+                        
+                        // Mettre à jour les boutons actifs
+                        quickBtns.forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                    });
+                });
+            }
+
+            updateQuestionCountDisplay() {
+                document.getElementById('countNumber').textContent = this.questionCount;
+                
+                // Vérifier si un bouton rapide correspond
+                const quickBtns = document.querySelectorAll('.quick-btn');
+                quickBtns.forEach(btn => {
+                    btn.classList.remove('active');
+                    if (parseInt(btn.dataset.count) === this.questionCount) {
+                        btn.classList.add('active');
+                    }
+                });
+            }
+
+            async loadQuiz() {
+                const sheetUrl = document.getElementById('sheetUrl').value.trim();
+                
+                if (!sheetUrl) {
+                    alert('Veuillez entrer l\'URL de la Google Sheet');
+                    return;
+                }
+
+                if (!this.selectedMode) {
+                    alert('Veuillez sélectionner un mode de quizz');
+                    return;
+                }
+
+                document.getElementById('setupSection').style.display = 'none';
+                document.getElementById('loadingSection').style.display = 'block';
+
+                try {
+                    let data;
+                    if (this.selectedDataSource === 'csv') {
+                        data = await this.loadFromCSV(sheetUrl);
+                    } else {
+                        data = await this.loadFromGoogleSheets(sheetUrl);
+                    }
+                    
+                    this.parseData(data);
+                    this.prepareQuiz();
+                    this.startQuiz();
+                } catch (error) {
+                    console.error('Erreur lors du chargement:', error);
+                    document.getElementById('loadingSection').innerHTML = 
+                        `<div class="error">Erreur lors du chargement des données : ${error.message}<br>Vérifiez l'URL et les permissions de la feuille.</div>`;
+                }
+            }
+
+            async loadFromCSV(url) {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP: ${response.status}`);
+                }
+                return await response.text();
+            }
+
+            async loadFromGoogleSheets(url) {
+                // Extraire l'ID de la feuille depuis l'URL
+                const sheetId = this.extractSheetId(url);
+                if (!sheetId) {
+                    throw new Error('URL Google Sheets invalide');
+                }
+
+                // Construire l'URL de l'API publique Google Sheets
+                const apiUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json`;
+                
+                const response = await fetch(apiUrl);
+                if (!response.ok) {
+                    throw new Error(`Erreur d'accès à Google Sheets: ${response.status}`);
+                }
+                
+                const text = await response.text();
+                // Nettoyer la réponse JSONP de Google
+                const jsonText = text.substring(47).slice(0, -2);
+                const data = JSON.parse(jsonText);
+                
+                return this.convertGoogleSheetsToCSV(data);
+            }
+
+            extractSheetId(url) {
+                const match = url.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+                return match ? match[1] : null;
+            }
+
+            convertGoogleSheetsToCSV(data) {
+                const rows = data.table.rows;
+                let csvText = '';
+                
+                rows.forEach((row, index) => {
+                    const cells = row.c || [];
+                    const csvRow = [];
+                    
+                    for (let i = 0; i < 8; i++) { // 8 colonnes attendues
+                        const cell = cells[i];
+                        let value = '';
+                        
+                        if (cell && cell.v !== null && cell.v !== undefined) {
+                            value = String(cell.v);
+                            // Échapper les guillemets et encapsuler si nécessaire
+                            if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+                                value = '"' + value.replace(/"/g, '""') + '"';
+                            }
+                        }
+                        
+                        csvRow.push(value);
+                    }
+                    
+                    csvText += csvRow.join(',') + '\n';
+                });
+                
+                return csvText;
+            }
+
+            parseCSV(csvText) {
+                const lines = csvText.trim().split('\n');
+                this.questions = [];
+
+                for (let i = 1; i < lines.length; i++) { // Ignorer l'en-tête
+                    const line = lines[i];
+                    const columns = this.parseCSVLine(line);
+                    
+                    if (columns.length >= 8) {
+                        const question = {
+                            text: columns[0].trim(),
+                            options: [
+                                columns[1].trim(),
+                                columns[2].trim(),
+                                columns[3].trim(),
+                                columns[4].trim(),
+                                columns[5].trim(),
+                                columns[6].trim()
+                            ].filter(option => option && option !== ''),
+                            correctAnswers: this.parseCorrectAnswers(columns[7])
+                        };
+                        
+                        if (question.text && question.options.length > 0) {
+                            this.questions.push(question);
+                        }
+                    }
+                }
+            }
+
+            parseCSVLine(line) {
+                const result = [];
+                let current = '';
+                let inQuotes = false;
+                
+                for (let i = 0; i < line.length; i++) {
+                    const char = line[i];
+                    
+                    if (char === '"') {
+                        inQuotes = !inQuotes;
+                    } else if (char === ',' && !inQuotes) {
+                        result.push(current);
+                        current = '';
+                    } else {
+                        current += char;
+                    }
+                }
+                
+                result.push(current);
+                return result;
+            }
+
+            parseCorrectAnswers(answersStr) {
+                if (!answersStr) return [];
+                
+                const letters = answersStr.trim().split(',').map(letter => letter.trim().toUpperCase());
+                const indices = [];
+                
+                letters.forEach(letter => {
+                    const index = letter.charCodeAt(0) - 65; // A=0, B=1, etc.
+                    if (index >= 0 && index < 6) {
+                        indices.push(index);
+                    }
+                });
+                
+                return indices;
+            }
+
+            prepareQuiz() {
+                if (this.selectedMode === 'exam') {
+                    this.questionCount = Math.min(80, this.questions.length);
+                } else {
+                    this.questionCount = Math.min(this.questionCount, this.questions.length);
+                }
+
+                // Mélanger les questions
+                this.questions = this.shuffleArray([...this.questions]);
+                this.questions = this.questions.slice(0, this.questionCount);
+                
+                this.userAnswers = new Array(this.questionCount).fill(null).map(() => []);
+                this.currentQuestionIndex = 0;
+            }
+
+            shuffleArray(array) {
+                const shuffled = [...array];
+                for (let i = shuffled.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                }
+                return shuffled;
+            }
+
+            startQuiz() {
+                document.getElementById('loadingSection').style.display = 'none';
+                document.getElementById('questionSection').style.display = 'block';
+                
+                this.startTime = new Date();
+                
+                if (this.selectedMode === 'exam') {
+                    this.startTimer();
+                }
+                
+                this.displayQuestion();
+            }
+
+            startTimer() {
+                const timerElement = document.getElementById('timer');
+                timerElement.style.display = 'block';
+                
+                this.timerInterval = setInterval(() => {
+                    const elapsed = new Date() - this.startTime;
+                    const minutes = Math.floor(elapsed / 60000);
+                    const seconds = Math.floor((elapsed % 60000) / 1000);
+                    timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                }, 1000);
+            }
+
+            displayQuestion() {
+                const question = this.questions[this.currentQuestionIndex];
+                
+                document.getElementById('questionCounter').textContent = 
+                    `Question ${this.currentQuestionIndex + 1} / ${this.questionCount}`;
+                document.getElementById('questionText').textContent = question.text;
+                
+                const progressPercent = ((this.currentQuestionIndex + 1) / this.questionCount) * 100;
+                document.getElementById('progressFill').style.width = `${progressPercent}%`;
+                
+                this.displayAnswers();
+                this.updateNavigation();
+            }
+
+            displayAnswers() {
+                const question = this.questions[this.currentQuestionIndex];
+                const answersGrid = document.getElementById('answersGrid');
+                answersGrid.innerHTML = '';
+                
+                question.options.forEach((option, index) => {
+                    const answerDiv = document.createElement('div');
+                    answerDiv.className = 'answer-option';
+                    answerDiv.dataset.index = index;
+                    
+                    const letter = String.fromCharCode(65 + index);
+                    answerDiv.innerHTML = `
+                        <div class="answer-letter">${letter}</div>
+                        <div>${option}</div>
+                    `;
+                    
+                    // Vérifier si cette réponse est sélectionnée
+                    if (this.userAnswers[this.currentQuestionIndex].includes(index)) {
+                        answerDiv.classList.add('selected');
+                    }
+                    
+                    answerDiv.addEventListener('click', () => {
+                        this.toggleAnswer(index);
+                    });
+                    
+                    answersGrid.appendChild(answerDiv);
+                });
+            }
+
+            toggleAnswer(answerIndex) {
+                const currentAnswers = this.userAnswers[this.currentQuestionIndex];
+                const answerElement = document.querySelector(`[data-index="${answerIndex}"]`);
+                
+                if (currentAnswers.includes(answerIndex)) {
+                    // Désélectionner
+                    const indexToRemove = currentAnswers.indexOf(answerIndex);
+                    currentAnswers.splice(indexToRemove, 1);
+                    answerElement.classList.remove('selected');
+                } else {
+                    // Sélectionner
+                    currentAnswers.push(answerIndex);
+                    answerElement.classList.add('selected');
+                }
+            }
+
+            updateNavigation() {
+                const prevBtn = document.getElementById('prevBtn');
+                const nextBtn = document.getElementById('nextBtn');
+                const finishBtn = document.getElementById('finishBtn');
+                
+                prevBtn.style.display = this.currentQuestionIndex > 0 ? 'block' : 'none';
+                
+                if (this.currentQuestionIndex < this.questionCount - 1) {
+                    nextBtn.style.display = 'block';
+                    finishBtn.style.display = 'none';
+                } else {
+                    nextBtn.style.display = 'none';
+                    finishBtn.style.display = 'block';
+                }
+            }
+
+            nextQuestion() {
+                if (this.currentQuestionIndex < this.questionCount - 1) {
+                    this.currentQuestionIndex++;
+                    this.displayQuestion();
+                }
+            }
+
+            prevQuestion() {
+                if (this.currentQuestionIndex > 0) {
+                    this.currentQuestionIndex--;
+                    this.displayQuestion();
+                }
+            }
+
+            finishQuiz() {
+                if (this.timerInterval) {
+                    clearInterval(this.timerInterval);
+                }
+                
+                this.showResults();
+            }
+
+            showResults() {
+                const endTime = new Date();
+                const totalTime = endTime - this.startTime;
+                
+                let correctCount = 0;
+                
+                this.questions.forEach((question, index) => {
+                    const userAnswer = this.userAnswers[index];
+                    const correctAnswer = question.correctAnswers;
+                    
+                    // Vérifier si les réponses correspondent exactement
+                    if (this.arraysEqual(userAnswer.sort(), correctAnswer.sort())) {
+                        correctCount++;
+                    }
+                });
+                
+                const percentage = Math.round((correctCount / this.questionCount) * 100);
+                const minutes = Math.floor(totalTime / 60000);
+                const seconds = Math.floor((totalTime % 60000) / 1000);
+                
+                document.getElementById('questionSection').style.display = 'none';
+                document.getElementById('resultsSection').style.display = 'block';
+                
+                document.getElementById('scoreDisplay').textContent = `${percentage}%`;
+                document.getElementById('correctAnswers').textContent = correctCount;
+                document.getElementById('totalQuestions').textContent = this.questionCount;
+                document.getElementById('timeSpent').textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                const examResult = document.getElementById('examResult');
+                if (this.selectedMode === 'exam') {
+                    if (percentage >= 64) {
+                        examResult.innerHTML = '<span class="success">✅ RÉUSSI - Score minimum atteint!</span>';
+                    } else {
+                        examResult.innerHTML = '<span class="failure">❌ ÉCHEC - Score insuffisant (minimum 64%)</span>';
+                    }
+                } else {
+                    examResult.innerHTML = '';
+                }
+            }
+
+            arraysEqual(a, b) {
+                return a.length === b.length && a.every((val, i) => val === b[i]);
+            }
+
+            restart() {
+                this.questions = [];
+                this.currentQuestionIndex = 0;
+                this.userAnswers = [];
+                this.selectedMode = null;
+                this.startTime = null;
+                
+                if (this.timerInterval) {
+                    clearInterval(this.timerInterval);
+                    this.timerInterval = null;
+                }
+                
+                document.getElementById('resultsSection').style.display = 'none';
+                document.getElementById('setupSection').style.display = 'block';
+                
+                // Réinitialiser les sélections
+                document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('selected'));
+                document.querySelectorAll('.source-option').forEach(o => o.classList.remove('selected'));
+                document.querySelector('[data-source="csv"]').classList.add('selected');
+                document.getElementById('sheetUrl').value = '';
+                this.selectedDataSource = 'csv';
+                this.questionCount = 20;
+                this.updateQuestionCountDisplay();
+                this.updateUrlHelp();
+            }
+        }
+
+        // Initialiser l'application
+        const app = new QuizApp();
+    </script>
+</body>
+</html>
