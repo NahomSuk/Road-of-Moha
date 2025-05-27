@@ -491,7 +491,18 @@
         // Initialisation
         window.addEventListener('load', () => {
             loadSavedUrl();
-            checkResumeQuiz();
+            // Vérifier d'abord si on a des questions sauvegardées
+            const savedUrl = sessionStorage.getItem('sheetUrl');
+            if (savedUrl) {
+                // Charger automatiquement les questions si l'URL est sauvegardée
+                document.getElementById('sheet-url').value = savedUrl;
+                loadQuestions().then(() => {
+                    checkResumeQuiz();
+                });
+            } else {
+                // Nettoyer toute sauvegarde de quiz si pas d'URL
+                clearQuizState();
+            }
         });
 
         // Gestion des états
@@ -519,7 +530,7 @@
             const url = document.getElementById('sheet-url').value.trim();
             if (!url) {
                 alert('Veuillez entrer l\'URL de votre Google Sheet');
-                return;
+                return false;
             }
 
             try {
@@ -547,9 +558,11 @@
                 document.getElementById('data-status').style.display = 'block';
                 
                 showMainMenu();
+                return true;
             } catch (error) {
                 updateConnectionStatus('error');
                 alert('Erreur lors du chargement: ' + error.message);
+                return false;
             }
         }
 
@@ -852,7 +865,14 @@
                 const state = JSON.parse(savedState);
                 // Vérifier si la sauvegarde n'est pas trop ancienne (24h)
                 if (Date.now() - state.timestamp < 24 * 60 * 60 * 1000) {
-                    document.getElementById('resume-modal').classList.remove('hidden');
+                    // Ne montrer la modal que si on a des questions chargées
+                    if (questions.length > 0) {
+                        document.getElementById('resume-modal').classList.remove('hidden');
+                    } else {
+                        // Si pas de questions, nettoyer et aller à la config
+                        clearQuizState();
+                        showConfig();
+                    }
                 } else {
                     clearQuizState();
                 }
@@ -861,6 +881,14 @@
 
         function resumeQuiz() {
             const savedState = JSON.parse(sessionStorage.getItem('quizState'));
+            
+            // Vérifier que les questions sont chargées
+            if (questions.length === 0) {
+                alert('Impossible de reprendre le quiz. Les questions ne sont pas chargées.');
+                startNewQuiz();
+                return;
+            }
+            
             currentQuiz = savedState.questions;
             currentQuestionIndex = savedState.currentIndex;
             userAnswers = savedState.answers;
