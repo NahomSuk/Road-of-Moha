@@ -35,6 +35,14 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        .answer-detail {
+            transition: all 0.3s ease;
+            max-height: 0;
+            overflow: hidden;
+        }
+        .answer-detail.show {
+            max-height: 1000px;
+        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen font-sans">
@@ -110,15 +118,20 @@
                 </div>
 
                 <div class="flex justify-between">
-                    <button id="prev-question" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition">
-                        <i class="fas fa-arrow-left mr-2"></i> Previous
+                    <button id="quit-quiz" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition">
+                        <i class="fas fa-sign-out-alt mr-2"></i> Quit Quiz
                     </button>
-                    <button id="next-question" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
-                        Next <i class="fas fa-arrow-right ml-2"></i>
-                    </button>
-                    <button id="submit-quiz" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition hidden">
-                        Submit <i class="fas fa-check ml-2"></i>
-                    </button>
+                    <div>
+                        <button id="prev-question" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition mr-2">
+                            <i class="fas fa-arrow-left mr-2"></i> Previous
+                        </button>
+                        <button id="next-question" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
+                            Next <i class="fas fa-arrow-right ml-2"></i>
+                        </button>
+                        <button id="submit-quiz" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition hidden">
+                            Submit <i class="fas fa-check ml-2"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -217,6 +230,7 @@
             prevQuestionBtn: document.getElementById('prev-question'),
             nextQuestionBtn: document.getElementById('next-question'),
             submitQuizBtn: document.getElementById('submit-quiz'),
+            quitQuizBtn: document.getElementById('quit-quiz'),
             timerDisplay: document.getElementById('timer'),
             timeDisplay: document.getElementById('time-display'),
             scorePercent: document.getElementById('score-percent'),
@@ -247,6 +261,7 @@
             elements.prevQuestionBtn.addEventListener('click', showPreviousQuestion);
             elements.nextQuestionBtn.addEventListener('click', showNextQuestion);
             elements.submitQuizBtn.addEventListener('click', submitQuiz);
+            elements.quitQuizBtn.addEventListener('click', showConfirmationModal);
             elements.restartQuizBtn.addEventListener('click', restartQuiz);
             elements.newQuizBtn.addEventListener('click', showSettingsPanel);
             elements.cancelExitBtn.addEventListener('click', hideConfirmationModal);
@@ -328,7 +343,10 @@
                     // Get answers from columns B to G (indexes 1 to 6)
                     for (let i = 1; i <= 6; i++) {
                         if (row.c[i]?.v) {
-                            answers.push(row.c[i].v);
+                            answers.push({
+                                letter: String.fromCharCode(64 + i), // A, B, C, etc.
+                                text: row.c[i].v
+                            });
                         }
                     }
                     
@@ -406,29 +424,28 @@
             elements.answersContainer.innerHTML = '';
             
             // Display answers
-            question.answers.forEach((answer, index) => {
-                const optionLetter = String.fromCharCode(65 + index); // A, B, C, etc.
+            question.answers.forEach((answer) => {
                 const answerElement = document.createElement('button');
                 answerElement.className = 'answer-option w-full text-left px-4 py-3 border border-gray-300 rounded-lg transition';
                 answerElement.innerHTML = `
-                    <span class="font-medium">${optionLetter}.</span> ${answer}
+                    <span class="font-medium">${answer.letter}.</span> ${answer.text}
                 `;
                 
                 // Mark selected answer
-                if (userAnswer && userAnswer.includes(optionLetter)) {
+                if (userAnswer && userAnswer.includes(answer.letter)) {
                     answerElement.classList.add('selected-answer');
                 }
                 
                 // Mark correct/incorrect answers after submission
                 if (state.quizSubmitted) {
-                    if (question.correctAnswers.includes(optionLetter)) {
+                    if (question.correctAnswers.includes(answer.letter)) {
                         answerElement.classList.add('correct-answer');
-                    } else if (userAnswer && userAnswer.includes(optionLetter) && !question.correctAnswers.includes(optionLetter)) {
+                    } else if (userAnswer && userAnswer.includes(answer.letter) && !question.correctAnswers.includes(answer.letter)) {
                         answerElement.classList.add('incorrect-answer');
                     }
                 }
                 
-                answerElement.addEventListener('click', () => selectAnswer(optionLetter));
+                answerElement.addEventListener('click', () => selectAnswer(answer.letter));
                 elements.answersContainer.appendChild(answerElement);
             });
             
@@ -534,11 +551,11 @@
                 elements.resultMessage.textContent = `You answered ${correctCount} out of ${state.quizData.length} questions correctly.`;
             }
             
-            // Show review questions
+            // Show review questions with full answer details
             elements.reviewQuestions.innerHTML = '';
             state.quizData.forEach((question, index) => {
                 const userAnswer = state.userAnswers[index] || 'None';
-                const correct = question.correctAnswers.join(', ');
+                const correctAnswerLetters = question.correctAnswers.join(', ');
                 
                 const isCorrect = () => {
                     const userAnswers = userAnswer.split(',').filter(a => a);
@@ -546,21 +563,77 @@
                            userAnswers.every(a => question.correctAnswers.includes(a));
                 };
                 
+                // Create answer details HTML
+                let answerDetailsHTML = '';
+                question.answers.forEach(answer => {
+                    const isUserSelected = userAnswer.includes(answer.letter);
+                    const isCorrectAnswer = question.correctAnswers.includes(answer.letter);
+                    
+                    let answerClass = 'border-gray-200';
+                    if (isCorrectAnswer) {
+                        answerClass = 'border-green-200 bg-green-50';
+                    } else if (isUserSelected) {
+                        answerClass = 'border-red-200 bg-red-50';
+                    }
+                    
+                    answerDetailsHTML += `
+                        <div class="p-3 border rounded-lg mb-2 ${answerClass}">
+                            <div class="flex items-start">
+                                <span class="font-medium mr-2">${answer.letter}.</span>
+                                <div>${answer.text}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
                 const reviewItem = document.createElement('div');
                 reviewItem.className = `p-4 rounded-lg border ${isCorrect() ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`;
                 reviewItem.innerHTML = `
-                    <h4 class="font-medium mb-2">${index + 1}. ${question.question}</h4>
-                    <div class="grid grid-cols-2 gap-2 mb-2">
+                    <div class="flex justify-between items-start mb-3">
+                        <h4 class="font-medium">${index + 1}. ${question.question}</h4>
+                        <span class="text-sm px-2 py-1 rounded ${isCorrect() ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                            ${isCorrect() ? 'Correct' : 'Incorrect'}
+                        </span>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 mb-4">
                         <div>
-                            <span class="text-sm font-medium text-gray-600">Your answer:</span>
-                            <p class="${isCorrect() ? 'text-green-700' : 'text-red-700'}">${userAnswer}</p>
+                            <div class="text-sm font-medium text-gray-600 mb-1">Your answer:</div>
+                            <div class="${isCorrect() ? 'text-green-700' : 'text-red-700'}">
+                                ${userAnswer || 'No answer selected'}
+                            </div>
                         </div>
                         <div>
-                            <span class="text-sm font-medium text-gray-600">Correct answer:</span>
-                            <p class="text-green-700">${correct}</p>
+                            <div class="text-sm font-medium text-gray-600 mb-1">Correct answer:</div>
+                            <div class="text-green-700">${correctAnswerLetters}</div>
                         </div>
                     </div>
+                    
+                    <div class="mb-3">
+                        <button class="text-sm font-medium text-indigo-600 hover:text-indigo-800 transition toggle-answers">
+                            <i class="fas fa-chevron-down mr-1"></i> Show answer details
+                        </button>
+                    </div>
+                    
+                    <div class="answer-detail">
+                        ${answerDetailsHTML}
+                    </div>
                 `;
+                
+                // Add toggle functionality for answer details
+                const toggleBtn = reviewItem.querySelector('.toggle-answers');
+                const answerDetail = reviewItem.querySelector('.answer-detail');
+                
+                toggleBtn.addEventListener('click', () => {
+                    answerDetail.classList.toggle('show');
+                    const icon = toggleBtn.querySelector('i');
+                    if (answerDetail.classList.contains('show')) {
+                        toggleBtn.innerHTML = '<i class="fas fa-chevron-up mr-1"></i> Hide answer details';
+                    } else {
+                        toggleBtn.innerHTML = '<i class="fas fa-chevron-down mr-1"></i> Show answer details';
+                    }
+                });
+                
                 elements.reviewQuestions.appendChild(reviewItem);
             });
         }
